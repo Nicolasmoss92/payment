@@ -1,19 +1,26 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
+import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
+import { ClientKafka } from "@nestjs/microservices";
 
 @Injectable()
-export class KafkaService {
+export class KafkaService implements OnModuleInit {
   constructor(
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
-  ) { }
+  ) {}
 
-  // Método para publicar um evento no Kafka
+  async onModuleInit() {
+    // Conectar ao Kafka ao iniciar o módulo
+    await this.kafkaClient.connect();
+
+    // Publica mensagem automaticamente ao iniciar
+    await this.createPayment();
+  }
+
   async createPayment() {
     const eventOrder = {
-      event: 'order.created',
+      event: 'payment.processed',
     };
 
-    // Publica a mensagem no tópico 'order-events'
+    // Publica mensagem no tópico
     this.kafkaClient.emit('v1-payment', eventOrder);
     console.log('Evento publicado no Kafka:', eventOrder);
 
